@@ -8,20 +8,15 @@ import io
 import os
 
 app = FastAPI()
-
-# Enable CORS to allow frontend requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Update with frontend URL in production
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Load model
 model = tf.keras.models.load_model("model.keras") 
-
-# Food classes
 food_classes = [
     "burger", "butter_naan", "chai", "chapati", "chole_bhature",
     "dal_makhani", "dhokla", "fried_rice", "idli", "jalebi",
@@ -29,14 +24,11 @@ food_classes = [
     "paani_puri", "pakode", "pav_bhaji", "pizza", "samosa"
 ]
 
-# Directory to save uploaded images
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# Stores classification results
 classified_results = {}
 
-# Example nutrition values (make sure this matches the food_classes list)
+# Example nutrition values 
 nutrition_values = {
     "burger": {"Calories": 354, "Protein": 17, "Carbs": 30, "Fat": 15},
     "butter_naan": {"Calories": 260, "Protein": 7, "Carbs": 35, "Fat": 10},
@@ -60,10 +52,9 @@ nutrition_values = {
     "samosa": {"Calories": 260, "Protein": 5, "Carbs": 30, "Fat": 16},
 }
 
-# Define preprocessing function
 def preprocess_image(image_bytes):
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    image = image.resize((256, 256))  
+    image = image.resize((224,224))  
     image_array = np.array(image)  
     image_array = np.expand_dims(image_array, axis=0)  
     return image_array.astype(np.float32)  
@@ -71,15 +62,10 @@ def preprocess_image(image_bytes):
 @app.post("/predict/")
 async def predict_food(file: UploadFile = File(...)):
     try:
-        # Read image bytes
         image_bytes = await file.read()
-
-        # Save the uploaded image
         file_path = os.path.join(UPLOAD_FOLDER, file.filename)
         with open(file_path, "wb") as buffer:
             buffer.write(image_bytes)
-
-        # Preprocess the image
         processed_image = preprocess_image(image_bytes)
 
         # Get model predictions
@@ -88,13 +74,8 @@ async def predict_food(file: UploadFile = File(...)):
         confidence = float(predictions[predicted_class_idx])  # Confidence score (0-1 range)
         food_name = food_classes[predicted_class_idx]
 
-        # Convert confidence to percentage (0-100%)
         confidence_percentage = round(confidence * 100, 2)
-
-        # Get nutritional values for the predicted food
         nutrition = nutrition_values.get(food_name, {})
-
-        # Store classification result
         classified_results[file.filename] = {
             "food_name": food_name,
             "confidence": confidence_percentage,  
