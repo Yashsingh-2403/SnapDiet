@@ -1,4 +1,3 @@
-# routes/recipe_api.py
 
 import requests
 from fastapi import APIRouter
@@ -11,7 +10,6 @@ SPOONACULAR_API_KEY = "your_api_key_here"
 @router.get("/recipe")
 def get_recipe(food_name: str):
     try:
-        # Step 1: Search recipe by name
         search_url = f"https://api.spoonacular.com/recipes/complexSearch"
         search_params = {
             "query": food_name,
@@ -27,7 +25,6 @@ def get_recipe(food_name: str):
 
         recipe_id = search_data["results"][0]["id"]
 
-        # Step 2: Get recipe details
         detail_url = f"https://api.spoonacular.com/recipes/{recipe_id}/information"
         detail_params = {
             "includeNutrition": False,
